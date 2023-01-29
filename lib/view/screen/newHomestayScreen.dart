@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:homestay_raya/view/screen/homestayListScreen.dart';
-import 'package:homestay_raya/view/shared/config.dart';
+import 'package:homestay_raya/view/shared/serverConfig.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart'; 
@@ -441,7 +441,7 @@ class _newHomestayScreenState extends State<newHomestayScreen> {
     String local = _hslocalEditingController.text;
     String base64Image = base64Encode(_image!.readAsBytesSync());
 
-    http.post(Uri.parse("${Config.Server}/Homestay_Raya/php/insert_homestay.php"), 
+    http.post(Uri.parse("${ServerConfig.Server}/Homestay_Raya/php/insert_homestay.php"), 
     body: {
       "userid": widget.user.id,
       "hsname": hsname,

@@ -7,7 +7,8 @@ import 'package:homestay_raya/model/user.dart';
 import 'package:homestay_raya/model/homestay.dart';
 import 'package:http/http.dart' as http;
 
-import '../shared/config.dart';
+import '../shared/serverConfig.dart';
+import 'detailScreen.dart';
 import 'mainScreen.dart';
 import 'profileScreen.dart';
 
@@ -58,33 +59,41 @@ class _HomestayListScreenState extends State<HomestayListScreen> {
                   crossAxisCount: rowcount,
                   children: List.generate(homestayList.length, (index) {
                     return Card(
-                      child: Column(
-                        children: [
-                          Flexible(
-                                  flex: 6,
-                                  child: CachedNetworkImage(
-                                    width: resWidth/2,
-                                    fit: BoxFit.cover,
-                                    imageUrl:
-                                        "${Config.Server}/Homestay_Raya/assets/images/homestay/${homestayList[index].homestayId}.png",
-                                    placeholder: (context, url) =>
-                                        const LinearProgressIndicator(),
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
-                                  ),
-                          ),
-                          Flexible(
-                            flex: 6,
-                            child: Column(
-                              children: [
-                                Text("Name: ${homestayList[index].homestayName}", overflow: TextOverflow.ellipsis,),
-                                Text("Price: RM${homestayList[index].homestayPrice}"),
-                                Text("Deposit: RM${homestayList[index].homestayDeposit}"),
-                                Text("Room No: ${homestayList[index].homestayRoomno}"),
-                                Text("Location: ${homestayList[index].homestayState}, ${homestayList[index].homestayLocal}"),
-                              ],
-                            )),
-                        ]),
+                      child: InkWell(
+                        onTap: () {
+                            _showDetails(index);
+                        },
+                        onLongPress: () {
+                            _deleteDialog(index);
+                        },
+                        child: Column(
+                          children: [
+                            Flexible(
+                                    flex: 6,
+                                    child: CachedNetworkImage(
+                                      width: resWidth/2,
+                                      fit: BoxFit.cover,
+                                      imageUrl:
+                                          "${ServerConfig.Server}/Homestay_Raya/assets/images/homestay/${homestayList[index].homestayId}.png",
+                                      placeholder: (context, url) =>
+                                          const LinearProgressIndicator(),
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(Icons.error),
+                                    ),
+                            ),
+                            Flexible(
+                              flex: 6,
+                              child: Column(
+                                children: [
+                                  Text("Name: ${homestayList[index].homestayName}", overflow: TextOverflow.ellipsis,),
+                                  Text("Price: RM${homestayList[index].homestayPrice}"),
+                                  Text("Deposit: RM${homestayList[index].homestayDeposit}"),
+                                  Text("Room No: ${homestayList[index].homestayRoomno}"),
+                                  Text("Location: ${homestayList[index].homestayState}, ${homestayList[index].homestayLocal}"),
+                                ],
+                              )),
+                          ]),
+                      ),
                     );
                   }),
                 ))
@@ -166,7 +175,7 @@ class _HomestayListScreenState extends State<HomestayListScreen> {
     //if registered user, continue get request
     http.get(
       Uri.parse(
-          "${Config.Server}/Homestay_Raya/php/loadUserHomestay.php?userid=${widget.user.id}"),
+          "${ServerConfig.Server}/Homestay_Raya/php/loadUserHomestay.php?userid=${widget.user.id}"),
     )
         .then((response) {
       // wait for response from the request
@@ -200,4 +209,96 @@ class _HomestayListScreenState extends State<HomestayListScreen> {
       setState(() {}); //refresh UI
     });
   }
+  
+  Future<void> _showDetails(int index) async {
+    Homestays homestay = Homestays.fromJson(homestayList[index].toJson());
+
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (content) => detailScreen(
+                  homestay: homestay,
+                  user: widget.user,
+                )));
+    _loadHomestay();
+  }
+  
+  void _deleteDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(20.0))),
+          title: Text(
+            "Delete ${truncateString(homestayList[index].homestayName.toString(), 15)}",
+            style: TextStyle(),
+          ),
+          content: const Text("Are you sure?", style: TextStyle()),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                "Yes",
+                style: TextStyle(),
+              ),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                _deleteHomestay(index);
+              },
+            ),
+            TextButton(
+              child: const Text(
+                "No",
+                style: TextStyle(),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteHomestay(int index) {
+    try {
+      http.post(Uri.parse("${ServerConfig.Server}/Homestay_Raya/php/delete_homestay.php"),
+      body: {
+        "homestayid": homestayList[index].homestayId,
+      }).then((response) {
+        var data = jsonDecode(response.body);
+        if (response.statusCode == 200 && data['status'] == "success") {
+          Fluttertoast.showToast(
+              msg: "Success",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              fontSize: 14.0);
+          _loadHomestay();
+          return;
+        } else {
+          Fluttertoast.showToast(
+              msg: "Failed",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              fontSize: 14.0);
+          return;
+        }
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+  
+  String truncateString(String str, int size) {
+    if (str.length > size) {
+      str = str.substring(0, size);
+      return "$str...";
+    } else {
+      return str;
+    }
+  }
+  
 }

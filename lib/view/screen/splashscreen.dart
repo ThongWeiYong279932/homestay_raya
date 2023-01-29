@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homestay_raya/model/user.dart';
 import 'package:homestay_raya/view/screen/mainScreen.dart';
-import 'package:homestay_raya/view/shared/config.dart';
+import 'package:homestay_raya/view/shared/serverConfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
     String _email = (prefs.getString('email')) ?? ''; 
     String _password = (prefs.getString('pass')) ?? ''; 
     if (_email.isNotEmpty) {
-      http.post(Uri.parse("${Config.Server}/Homestay_Raya/php/login_user.php"), 
+      http.post(Uri.parse("${ServerConfig.Server}/Homestay_Raya/php/login_user.php"), 
         body: {"email": _email, "password": _password}).then((response) { 
           if (response.statusCode == 200){
             var jsonResponse = json.decode(response.body);
